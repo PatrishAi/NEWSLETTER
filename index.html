@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pachnący newsletter</title>
-  <meta name="description" content="Dołącz do mojego pachnącego newslettera – zero spamu, 1 wiadomość w miesiącu." />
+  <title></title>
 
-  <!-- MailerLite Universal: Twoje prawidłowe ACCOUNT ID -->
+  <!-- MailerLite Universal (Twoje konto) -->
   <script>
     (function(w,d,e,u,f,l,n){
       w[f]=w[f]||function(){(w[f].q=w[f].q||[]).push(arguments);};
@@ -14,59 +13,81 @@
       n=d.getElementsByTagName(e)[0]; n.parentNode.insertBefore(l,n);
     })(window, document, 'script', 'https://assets.mailerlite.com/js/universal.js', 'ml');
 
-    ml('account', '2044515');  
+    ml('account', '2044515');
   </script>
 
   <style>
-    :root{ --brand:#7b2b73; --bg:#faf7f9; --text:#2b2b2b; }
+    /* Czyste tło – bez żadnych napisów */
     html,body{height:100%}
     body{
-      margin:0; font-family:system-ui, Arial, sans-serif; color:var(--text);
-      background: radial-gradient(1200px 600px at 15% 0%, #f4e9f1 0, #fff 60%) no-repeat, var(--bg);
+      margin:0;
+      background:#f7dff0; /* delikatny róż, jak w Twoim podglądzie */
       display:grid; place-items:center;
+      font-family:system-ui, Arial, sans-serif;
     }
-    .wrap{ text-align:center; padding:32px 20px; max-width:860px; }
-    h1{ font-weight:800; margin:.2em 0 }
-    p.lead{ opacity:.85; margin:.3em 0 1.2em }
-    .btn{
-      background:var(--brand); color:#fff; border:none; border-radius:10px;
-      padding:14px 22px; font-weight:700; cursor:pointer;
-    }
-    .hint{font-size:.9rem; opacity:.7}
   </style>
 </head>
 <body>
-
-  <div class="wrap">
-    <h1>Witaj! Twój popup zaraz się pojawi 💜</h1>
-    <p class="lead">Zero spamu – tylko moja oferta. Tylko 1 wiadomość w miesiącu.</p>
-
-    <!-- Ręczny przycisk dodatkowy (jeśli pop-up jest blokowany) -->
-    <button class="btn" id="openPopup">Pokaż formularz</button>
-    <p class="hint">Jeśli okienko nie wyskoczy samo w kilka sekund, kliknij przycisk lub odśwież stronę (Ctrl/Cmd + F5).</p>
-  </div>
+  <!-- celowo pusto – tylko popup -->
 
   <script>
-    /* FORM_ID z MailerLite – Twój */
+    /* Ustawienia formularza */
     const FORM_ID = 'UWMDRa';
 
+    /* 1) Pokaż popup po załadowaniu strony */
     function tryShowPopup(retry=0){
       if (typeof ml === 'function') {
         ml('show', FORM_ID, true);
-      } else if (retry < 10) {
-        setTimeout(()=>tryShowPopup(retry+1), 300);
+      } else if (retry < 15) {
+        setTimeout(()=>tryShowPopup(retry+1), 200);
       }
     }
-
-    document.addEventListener('DOMContentLoaded', function(){
-      setTimeout(()=>tryShowPopup(), 700);
-      document.getElementById('openPopup').onclick = ()=>{
-        if (typeof ml === 'function') ml('show', FORM_ID, true);
-      };
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(()=>tryShowPopup(), 500);
     });
+    /* dodatkowa próba po 2,5 s (wolniejsze łącza) */
+    setTimeout(()=>{ if (typeof ml === 'function') ml('show', FORM_ID, true); }, 2500);
 
-    setTimeout(()=>{ if (typeof ml === 'function') ml('show', FORM_ID, true); }, 3000);
+    /* 2) Nie pozwól zamykać pop‑upu kliknięciem w tło ani klawiszem ESC
+          – „zabezpieczamy” overlay i klawisz Esc.
+          MailerLite wstrzykuje elementy dynamicznie, więc obserwujemy DOM. */
+    function hardenPopup() {
+      // zablokuj zamykanie ESC
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          e.preventDefault();
+          // od razu znów pokaż
+          if (typeof ml === 'function') ml('show', FORM_ID, true);
+        }
+      }, true);
+
+      const stopClick = (el) => {
+        if (!el) return;
+        el.style.pointerEvents = 'none';     // klik w tło nie zadziała
+      };
+
+      // obserwuj i gdy tylko pojawi się overlay, unieszkodliw go
+      const obs = new MutationObserver(() => {
+        // typowe nazwy nakładki (overlay) w ML – łapiemy szeroko
+        const candidates = Array.from(document.querySelectorAll(`
+          [class*="overlay"],
+          [class*="backdrop"],
+          .ml-overlay,
+          .ml-popup-overlay,
+          .ml-backdrop
+        `));
+        candidates.forEach(stopClick);
+
+        // jeżeli ktoś kliknie w dokument i pop-up zniknie, pokaż ponownie
+        document.addEventListener('click', () => {
+          // krótka pauza, żeby ML zdążył ukryć, a my znów pokażemy
+          setTimeout(()=>{ if (typeof ml === 'function') ml('show', FORM_ID, true); }, 50);
+        }, true);
+      });
+      obs.observe(document.documentElement, { childList:true, subtree:true });
+    }
+    hardenPopup();
   </script>
-
 </body>
 </html>
