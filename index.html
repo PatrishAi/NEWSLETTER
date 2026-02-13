@@ -1,23 +1,72 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Mój newsletter</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pachnący newsletter</title>
+  <meta name="description" content="Dołącz do mojego pachnącego newslettera – zero spamu, 1 wiadomość w miesiącu." />
+
+  <!-- MailerLite Universal: Twoje prawidłowe ACCOUNT ID -->
+  <script>
+    (function(w,d,e,u,f,l,n){
+      w[f]=w[f]||function(){(w[f].q=w[f].q||[]).push(arguments);};
+      l=d.createElement(e); l.async=1; l.src=u;
+      n=d.getElementsByTagName(e)[0]; n.parentNode.insertBefore(l,n);
+    })(window, document, 'script', 'https://assets.mailerlite.com/js/universal.js', 'ml');
+
+    ml('account', '2044515');  
+  </script>
+
+  <style>
+    :root{ --brand:#7b2b73; --bg:#faf7f9; --text:#2b2b2b; }
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui, Arial, sans-serif; color:var(--text);
+      background: radial-gradient(1200px 600px at 15% 0%, #f4e9f1 0, #fff 60%) no-repeat, var(--bg);
+      display:grid; place-items:center;
+    }
+    .wrap{ text-align:center; padding:32px 20px; max-width:860px; }
+    h1{ font-weight:800; margin:.2em 0 }
+    p.lead{ opacity:.85; margin:.3em 0 1.2em }
+    .btn{
+      background:var(--brand); color:#fff; border:none; border-radius:10px;
+      padding:14px 22px; font-weight:700; cursor:pointer;
+    }
+    .hint{font-size:.9rem; opacity:.7}
+  </style>
 </head>
 <body>
 
-<h2>Witaj! Twój popup zaraz się pojawi 💗</h2>
+  <div class="wrap">
+    <h1>Witaj! Twój popup zaraz się pojawi 💜</h1>
+    <p class="lead">Zero spamu – tylko moja oferta. Tylko 1 wiadomość w miesiącu.</p>
 
-<!-- MAILERLITE SCRIPT -->
-<script>
-    (function(w,d,e,u,f,l,n){w[f]=w[f]||function(){(w[f].q=w[f].q||[])
-    .push(arguments);},l=d.createElement(e),l.async=1,l.src=u,
-    n=d.getElementsByTagName(e)[0],n.parentNode.insertBefore(l,n);})
-    (window,document,'script','https://assets.mailerlite.com/js/universal.js','ml');
+    <!-- Ręczny przycisk dodatkowy (jeśli pop-up jest blokowany) -->
+    <button class="btn" id="openPopup">Pokaż formularz</button>
+    <p class="hint">Jeśli okienko nie wyskoczy samo w kilka sekund, kliknij przycisk lub odśwież stronę (Ctrl/Cmd + F5).</p>
+  </div>
 
-    ml('account', '2044515');
-</script>
+  <script>
+    /* FORM_ID z MailerLite – Twój */
+    const FORM_ID = 'UWMDRa';
+
+    function tryShowPopup(retry=0){
+      if (typeof ml === 'function') {
+        ml('show', FORM_ID, true);
+      } else if (retry < 10) {
+        setTimeout(()=>tryShowPopup(retry+1), 300);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      setTimeout(()=>tryShowPopup(), 700);
+      document.getElementById('openPopup').onclick = ()=>{
+        if (typeof ml === 'function') ml('show', FORM_ID, true);
+      };
+    });
+
+    setTimeout(()=>{ if (typeof ml === 'function') ml('show', FORM_ID, true); }, 3000);
+  </script>
 
 </body>
 </html>
