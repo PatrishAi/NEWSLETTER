@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title></title>
+  <title>Mój pachnący newsletter</title>
 
-  <!-- MailerLite Universal -->
+  <!-- MailerLite Universal (Twoje konto) -->
   <script>
     (function(w,d,e,u,f,l,n){
       w[f]=w[f]||function(){(w[f].q=w[f].q||[]).push(arguments);};
@@ -13,47 +13,79 @@
       n=d.getElementsByTagName(e)[0]; n.parentNode.insertBefore(l,n);
     })(window, document, 'script', 'https://assets.mailerlite.com/js/universal.js', 'ml');
 
-    /* Twoje konto */
+    /* ID konta ML – Twoje */
     ml('account', '2044515');
 
-    /* Pokaż formularz NATYCHMIAST (kolejkuje się nawet jeśli skrypt jeszcze się ładuje) */
+    /* Wyświetl formularz od razu (kolejkuje się nawet przed pełnym załadowaniem) */
     ml('show', 'UWMDRa', true);
   </script>
 
   <style>
-    /* Czyste tło – zero napisów na stronie */
     html,body{height:100%}
     body{
       margin:0;
-      background:#f7dff0; /* delikatny róż jak w podglądzie */
+      background:#f7dff0;      /* delikatny róż */
       font-family:system-ui, Arial, sans-serif;
     }
+
+    /* Pasek z informacją o F5 – dyskretny, przyklejony na dole */
+    .sticky-note{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom:14px; padding:10px 14px; border-radius:10px;
+      background:rgba(123,43,115,0.14); color:#3a2b36; 
+      backdrop-filter:saturate(140%) blur(2px);
+      font-size:14px; line-height:1.25; user-select:none; z-index:2147483647;
+      box-shadow:0 4px 16px rgba(0,0,0,.08);
+    }
+    .sticky-note b{color:#7b2b73}
   </style>
 </head>
 <body>
-  <!-- Pusto – tylko pop‑up -->
+
+  <!-- Minimalna, czysta strona – popup otwiera się sam -->
+  <div class="sticky-note">
+    Jeśli okienko zniknie, naciśnij <b>F5</b> (twarde odświeżenie).
+  </div>
 
   <script>
-    /* Dodatkowy „watchdog”: jeśli sieć wolna, ponów wywołanie po chwili */
+    /* Konfiguracja formularza */
+    const FORM_ID = 'UWMDRa';
+
+    /* Funkcja bezpiecznego pokazywania pop‑upu */
+    function showPopupSafe(){
+      try { if (typeof ml === 'function') ml('show', FORM_ID, true); } catch(e){}
+    }
+
+    /* 1) Dodatkowe próby pokazania – gdyby sieć była wolna */
     (function ensurePopup(){
-      var tries = 0;
-      function showAgain(){
-        try {
-          if (typeof ml === 'function') ml('show', 'UWMDRa', true);
-        } catch(e){}
-        if (++tries < 10) setTimeout(showAgain, 400);
+      let tries = 0;
+      function again(){
+        showPopupSafe();
+        if (++tries < 12) setTimeout(again, 400); // ~5 sekund „strażnika”
       }
-      setTimeout(showAgain, 600);
+      setTimeout(again, 500);
     })();
 
-    /* Zablokuj zamykanie kliknięciem w tło (overlay) */
-    (function preventOverlayClose(){
+    /* 2) Zablokuj zamykanie kliknięciem w tło (overlay) i Esc.
+          Obserwujemy DOM, bo ML wstrzykuje elementy dynamicznie. */
+    (function hardenBehavior(){
+      // Blokada ESC i natychmiastowe przywracanie
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          setTimeout(showPopupSafe, 10);
+        }
+      }, true);
+
+      // Unieszkodliw kliknięcia w nakładkę + przywracanie po kliknięciu gdziekolwiek
       const stopOverlay = (el)=>{
         if (!el) return;
-        el.style.pointerEvents = 'none';        /* klik poza oknem nic nie robi */
+        el.style.pointerEvents = 'none'; // klik w tło nic nie zrobi
       };
+
       const mo = new MutationObserver(()=>{
-        // typowe nazwy nakładki w MailerLite – łapiemy szeroko
+        // typowe klasy overlay/backdrop w komponentach ML – łapiemy szeroko
         document.querySelectorAll(`
           [class*="overlay"],
           [class*="backdrop"],
@@ -61,6 +93,11 @@
         `).forEach(stopOverlay);
       });
       mo.observe(document.documentElement, {childList:true, subtree:true});
+
+      // Jeśli ktoś kliknie w dokument i popup zniknie – natychmiast przywróć
+      document.addEventListener('click', ()=>{
+        setTimeout(showPopupSafe, 30);
+      }, true);
     })();
   </script>
 </body>
