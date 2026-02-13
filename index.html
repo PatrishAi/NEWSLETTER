@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title></title>
 
-  <!-- MailerLite Universal (Twoje konto) -->
+  <!-- MailerLite Universal -->
   <script>
     (function(w,d,e,u,f,l,n){
       w[f]=w[f]||function(){(w[f].q=w[f].q||[]).push(arguments);};
@@ -13,81 +13,55 @@
       n=d.getElementsByTagName(e)[0]; n.parentNode.insertBefore(l,n);
     })(window, document, 'script', 'https://assets.mailerlite.com/js/universal.js', 'ml');
 
+    /* Twoje konto */
     ml('account', '2044515');
+
+    /* Pokaż formularz NATYCHMIAST (kolejkuje się nawet jeśli skrypt jeszcze się ładuje) */
+    ml('show', 'UWMDRa', true);
   </script>
 
   <style>
-    /* Czyste tło – bez żadnych napisów */
+    /* Czyste tło – zero napisów na stronie */
     html,body{height:100%}
     body{
       margin:0;
-      background:#f7dff0; /* delikatny róż, jak w Twoim podglądzie */
-      display:grid; place-items:center;
+      background:#f7dff0; /* delikatny róż jak w podglądzie */
       font-family:system-ui, Arial, sans-serif;
     }
   </style>
 </head>
 <body>
-  <!-- celowo pusto – tylko popup -->
+  <!-- Pusto – tylko pop‑up -->
 
   <script>
-    /* Ustawienia formularza */
-    const FORM_ID = 'UWMDRa';
-
-    /* 1) Pokaż popup po załadowaniu strony */
-    function tryShowPopup(retry=0){
-      if (typeof ml === 'function') {
-        ml('show', FORM_ID, true);
-      } else if (retry < 15) {
-        setTimeout(()=>tryShowPopup(retry+1), 200);
+    /* Dodatkowy „watchdog”: jeśli sieć wolna, ponów wywołanie po chwili */
+    (function ensurePopup(){
+      var tries = 0;
+      function showAgain(){
+        try {
+          if (typeof ml === 'function') ml('show', 'UWMDRa', true);
+        } catch(e){}
+        if (++tries < 10) setTimeout(showAgain, 400);
       }
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(()=>tryShowPopup(), 500);
-    });
-    /* dodatkowa próba po 2,5 s (wolniejsze łącza) */
-    setTimeout(()=>{ if (typeof ml === 'function') ml('show', FORM_ID, true); }, 2500);
+      setTimeout(showAgain, 600);
+    })();
 
-    /* 2) Nie pozwól zamykać pop‑upu kliknięciem w tło ani klawiszem ESC
-          – „zabezpieczamy” overlay i klawisz Esc.
-          MailerLite wstrzykuje elementy dynamicznie, więc obserwujemy DOM. */
-    function hardenPopup() {
-      // zablokuj zamykanie ESC
-      document.addEventListener('keydown', (e)=>{
-        if (e.key === 'Escape') {
-          e.stopPropagation();
-          e.preventDefault();
-          // od razu znów pokaż
-          if (typeof ml === 'function') ml('show', FORM_ID, true);
-        }
-      }, true);
-
-      const stopClick = (el) => {
+    /* Zablokuj zamykanie kliknięciem w tło (overlay) */
+    (function preventOverlayClose(){
+      const stopOverlay = (el)=>{
         if (!el) return;
-        el.style.pointerEvents = 'none';     // klik w tło nie zadziała
+        el.style.pointerEvents = 'none';        /* klik poza oknem nic nie robi */
       };
-
-      // obserwuj i gdy tylko pojawi się overlay, unieszkodliw go
-      const obs = new MutationObserver(() => {
-        // typowe nazwy nakładki (overlay) w ML – łapiemy szeroko
-        const candidates = Array.from(document.querySelectorAll(`
+      const mo = new MutationObserver(()=>{
+        // typowe nazwy nakładki w MailerLite – łapiemy szeroko
+        document.querySelectorAll(`
           [class*="overlay"],
           [class*="backdrop"],
-          .ml-overlay,
-          .ml-popup-overlay,
-          .ml-backdrop
-        `));
-        candidates.forEach(stopClick);
-
-        // jeżeli ktoś kliknie w dokument i pop-up zniknie, pokaż ponownie
-        document.addEventListener('click', () => {
-          // krótka pauza, żeby ML zdążył ukryć, a my znów pokażemy
-          setTimeout(()=>{ if (typeof ml === 'function') ml('show', FORM_ID, true); }, 50);
-        }, true);
+          .ml-overlay, .ml-popup-overlay, .ml-backdrop
+        `).forEach(stopOverlay);
       });
-      obs.observe(document.documentElement, { childList:true, subtree:true });
-    }
-    hardenPopup();
+      mo.observe(document.documentElement, {childList:true, subtree:true});
+    })();
   </script>
 </body>
 </html>
